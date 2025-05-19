@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agendamento de Transporte de Pacientes - Regulação</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#1E40AF',
+                        secondary: '#1E3A8A',
+                        accent: '#3B82F6',
+                        light: '#EFF6FF',
+                        dark: '#1F2937',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom CSS for elements that can't be done with Tailwind */
+        .sidebar {
+            transition: all 0.3s ease;
+        }
+        .sidebar.collapsed {
+            width: 70px;
+        }
+        .sidebar.collapsed .sidebar-text {
+            display: none;
+        }
+        .sidebar.collapsed .sidebar-icon {
+            margin-right: 0;
+        }
+        .main-content {
+            transition: margin-left 0.3s ease;
+        }
+        
+        /* Animation for notifications */
+        @keyframes slideIn {
+            from { transform: translateX(100%); }
+            to { transform: translateX(0); }
+        }
+        
+        .notification {
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans">
+    <div class="flex h-screen overflow-hidden">
+        <!-- Sidebar -->
+        <div class="sidebar bg-primary text-white flex flex-col w-64">
+            <!-- Logo and toggle -->
+            <div class="p-4 flex items-center justify-between border-b border-secondary">
+                <div class="flex items-center">
+                    <i class="fas fa-ambulance text-2xl sidebar-icon mr-3"></i>
+                    <span class="sidebar-text font-bold text-xl">Transporte Saúde</span>
+                </div>
+                <button id="sidebarToggle" class="text-white hover:text-accent focus:outline-none">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
+            
+            <!-- Navigation -->
+            <nav class="flex-1 overflow-y-auto">
+                <div class="p-4">
+                    <div class="mb-6">
+                        <h3 class="sidebar-text uppercase text-xs font-semibold text-accent mb-3">Menu Principal</h3>
+                        <ul>
+                            <li class="mb-2">
+                                <a href="#" class="flex items-center p-2 rounded-lg bg-secondary text-white">
+                                    <i class="fas fa-home sidebar-icon mr-3"></i>
+                                    <span class="sidebar-text">Dashboard</span>
+                                </a>
+                            </li>
+                            <li class="mb-2">
+                                <a href="#" class="flex items-center p-2 rounded-lg hover:bg-secondary text-white">
+                                    <i class="fas fa-calendar-alt sidebar-icon mr-3"></i>
+                                    <span class="sidebar-text">Agendamentos</span>
+                                </a>
+                            </li>
+                            <li class="mb-2">
+                                <a href="#" class="flex items-center p-2 rounded-lg hover:bg-secondary text-white">
+                                    <i class="fas fa-user-injured sidebar-icon mr-3"></i>
+                                    <span class="sidebar-text">Pacientes</span>
+                                </a>
+                            </li>
+                            <li class="mb-2">
+                                <a href="#" class="flex items-center p-2 rounded-lg hover:bg-secondary text-white">
+                                    <i class="fas fa-hospital sidebar-icon mr-3"></i>
+                                    <span class="sidebar-text">Unidades de Saúde</span>
+                                </a>
+                            </li>
+                            <li class="mb-2">
+                                <a href="#" class="flex items-center p-2 rounded-lg hover:bg-secondary text-white">
+                                    <i class="fas fa-ambulance sidebar-icon mr-3"></i>
+                                    <span class="sidebar-text">Veículos</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                    
+                    <div class="mb-6">
+                        <h3 class="sidebar-text uppercase text-xs font-semibold text-accent mb-3">Relatórios</h3>
+                        <ul>
+                            <li class="mb-2">
+                                <a href="#" class="flex items-center p-2 rounded-lg hover:bg-secondary text-white">
+                                    <i class="fas fa-chart-bar sidebar-icon mr-3"></i>
+                                    <span class="sidebar-text">Estatísticas</span>
+                                </a>
+                            </li>
+                            <li class="mb-2">
+                                <a href="#" class="flex items-center p-2 rounded-lg hover:bg-secondary text-white">
+                                    <i class="fas fa-file-alt sidebar-icon mr-3"></i>
+                                    <span class="sidebar-text">Relatórios</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </nav>
+            
+            <!-- User profile -->
+            <div class="p-4 border-t border-secondary">
+                <div class="flex items-center">
+                    <img src="https://via.placeholder.com/40" alt="User" class="rounded-full mr-3">
+                    <div class="sidebar-text">
+                        <p class="font-semibold">Usuário Admin</p>
+                        <p class="text-xs text-accent">admin@saude.gov.br</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Main content -->
+        <div class="main-content flex-1 flex flex-col overflow-hidden">
+            <!-- Top bar -->
+            <header class="bg-white shadow-sm">
+                <div class="flex items-center justify-between p-4">
+                    <h1 class="text-2xl font-bold text-dark">Agendamento de Transporte</h1>
+                    
+                    <div class="flex items-center space-x-4">
+                        <div class="relative">
+                            <button id="notificationBtn" class="text-gray-600 hover:text-primary focus:outline-none">
+                                <i class="fas fa-bell text-xl"></i>
+                                <span class="absolute top-0 right-0 h-2 w-2 rounded-full bg-red-500"></span>
+                            </button>
+                            
+                            <!-- Notification dropdown -->
+                            <div id="notificationDropdown" class="hidden absolute right-0 mt-2 w-72 bg-white rounded-md shadow-lg z-10">
+                                <div class="p-3 border-b">
+                                    <h3 class="font-semibold">Notificações (3)</h3>
+                                </div>
+                                <div class="overflow-y-auto max-h-60">
+                                    <div class="notification p-3 border-b hover:bg-gray-50">
+                                        <div class="flex">
+                                            <div class="flex-shrink-0 text-blue-500">
+                                                <i class="fas fa-info-circle"></i>
+                                            </div>
+                                            <div class="ml-3">
+                                                <p class="text-sm font-medium">Novo agendamento</p>
+                                                <p class="text-xs text-gray-500">Paciente João Silva para amanhã</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="notification p-3 border-b hover:bg-gray-50">
+                                        <div class="flex">
+                                            <div class="flex-shrink-0 text-yellow-500">
+                                                <i class="fas fa-exclamation-triangle"></i>
+                                            </div>
+                                            <div class="ml-3">
+                                                <p class="text-sm font-medium">Transporte atrasado</p>
+                                                <p class="text-xs text-gray-500">Veículo 12 com 30min de atraso</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="notification p-3 hover:bg-gray-50">
+                                        <div class="flex">
+                                            <div class="flex-shrink-0 text-green-500">
+                                                <i class="fas fa-check-circle"></i>
+                                            </div>
+                                            <div class="ml-3">
+                                                <p class="text-sm font-medium">Transporte concluído</p>
+                                                <p class="text-xs text-gray-500">Paciente Maria Souza chegou ao destino</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="p-3 text-center bg-gray-50">
+                                    <a href="#" class="text-xs font-medium text-primary hover:underline">Ver todas</a>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="relative">
+                            <button id="userMenuBtn" class="flex items-center text-gray-600 hover:text-primary focus:outline-none">
+                                <span class="mr-2">Admin</span>
+                                <i class="fas fa-chevron-down text-xs"></i>
+                            </button>
+                            
+                            <!-- User menu dropdown -->
+                            <div id="userMenuDropdown" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10">
+                                <div class="py-1">
+                                    <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Perfil</a>
+                                    <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Configurações</a>
+                                    <div class="border-t border-gray-100"></div>
+                                    <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Sair</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+            
+            <!-- Page content -->
+            <main class="flex-1 overflow-y-auto p-6 bg-gray-50">
+                <div class="max-w-7xl mx-auto">
+                    <!-- Page header -->
+                    <div class="mb-6">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <h2 class="text-2xl font-bold text-dark">Novo Agendamento</h2>
+                                <p class="text-gray-600">Preencha os dados para agendar o transporte do paciente</p>
+                            </div>
+                            <div>
+                                <button class="bg-primary hover:bg-secondary text-white px-4 py-2 rounded-lg flex items-center">
+                                    <i class="fas fa-save mr-2"></i> Salvar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Form sections -->
+                    <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                        <!-- Tabs -->
+                        <div class="border-b border-gray-200">
+                            <nav class="flex -mb-px">
+                                <button id="patientTab" class="tab-button active py-4 px-6 text-center border-b-2 font-medium text-sm border-primary text-primary">
+                                    <i class="fas fa-user-injured mr-2"></i> Dados do Paciente
+                                </button>
+                                <button id="transportTab" class="tab-button py-4 px-6 text-center border-b-2 font-medium text-sm border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                                    <i class="fas fa-ambulance mr-2"></i> Dados do Transporte
+                                </button>
+                                <button id="medicalTab" class="tab-button py-4 px-6 text-center border-b-2 font-medium text-sm border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                                    <i class="fas fa-file-medical mr-2"></i> Informações Médicas
+                                </button>
+                            </nav>
+                        </div>
+                        
+                        <!-- Tab content -->
+                        <div class="p-6">
+                            <!-- Patient data form -->
+                            <div id="patientContent" class="tab-content active">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div>
+                                        <label for="patientName" class="block text-sm font-medium text-gray-700 mb-1">Nome Completo do Paciente</label>
+                                        <input type="text" id="patientName" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary">
+                                    </div>
+                                    
+                                    <div>
+                                        <label for="patientCNS" class="block text-sm font-medium text-gray-700 mb-1">Cartão Nacional de Saúde (CNS)</label>
+                                        <input type="text" id="patientCNS" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary">
+                                    </div>
+                                    
+                                    <div>
+                                        <label for="patientCPF" class="block text-sm font-medium text-gray-700 mb-1">CPF</label>
+                                        <input type="text" id="patientCPF" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary">
+                                    </div>
+                                    
+                                    <div>
+                                        <label for="patientBirth" class="block text-sm font-medium text-gray-700 mb-1">Data de Nascimento</label>
+                                        <input type="date" id="patientBirth" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary">
+                                    </div>
+                                    
+                                    <div>
+                                        <label for="patientPhone" class="block text-sm font-medium text-gray-700 mb-1">Telefone</label>
+                                        <input type="tel" id="patientPhone" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary">
+                                    </div>
+                                    
+                                    <div>
+                                        <label for="patientResponsible" class="block text-sm font-medium text-gray-700 mb-1">Responsável (se necessário)</label>
+                                        <input type="text" id="patientResponsible" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary">
+                                    </div>
+                                </div>
+                                
+                                <div class="mt-6">
+                                    <h3 class="text-lg font-medium text-gray-900 mb-4">Endereço do Paciente</h3>
+                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                        <div>
+                                            <label for="patientCEP" class="block text-sm font-medium text-gray-700 mb-1">CEP</label>
+                                            <div class="flex">
+                                                <input type="text" id="patientCEP" class="flex-1 px-3 py-2 border border-gray-300 rounded-l-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary">
+                                                <button class="bg-primary text-white px-3 py-2 rounded-r-md hover:bg-secondary">
+                                                    <i class="fas fa-search"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="md:col-span-2">
+                                            <label for="patientStreet" class="block text-sm font-medium text-gray-700 mb-1">Logradouro</label>
+                                            <input type="text" id="patientStreet" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary">
+                                        </div>
+                                        
+                                        <div>
+                                            <label for="patientNumber" class="block text-sm font-medium text-gray-700 mb-1">Número</label>
+                                            <input type="text" id="patientNumber" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary">
+                                        </div>
+                                        
+                                        <div>
+                                            <label for="patientComplement" class="block text-sm font-medium text-gray-700 mb-1">Complemento</label>
+                                            <input type="text" id="patientComplement" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary">
+                                        </div>
+                                        
+                                        <div>
+                                            <label for="patientNeighborhood" class="block text-sm font-medium text-gray-700 mb-1">Bairro</label>
+                                            <input type="text" id="patientNeighborhood" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary">
+                                        </div>
+                                        
+                                        <div>
+                                            <label for="patientCity" class="block text-sm font-medium text-gray-700 mb-1">Cidade</label>
+                                            <input type="text" id="patientCity" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary">
+                                        </div>
+                                        
+                                        <div>
+                                            <label for="patientState" class="block text-sm font-medium text-gray-700 mb-1">Estado</label>
+                                            <select id="patientState" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary">
+                                                <option value="">Selecione</option>
+                                                <option value="AC">Acre</option>
+                                                <option value="AL">Alagoas</option>
+                                                <option value="AP">Amapá</option>
+                                                <option value="AM">Amazonas</option>
+                                                <option value="BA">Bahia</option>
+                                                <option value="CE">Ceará</option>
+                                                <option value="DF">Distrito Federal</option>
+                                                <option value="ES">Espírito Santo</option>
+                                                <option value="GO">Goiás</option>
+                                                <option value="MA">Maranhão</option>
+                                                <option value="MT">Mato Grosso</option>
+                                                <option value="MS">Mato Grosso do Sul</option>
+                                                <option value="MG">Minas Gerais</option>
+                                                <option value="PA">Pará</option>
+                                                <option value="PB">Paraíba</option>
+                                                <option value="PR">Paraná</option>
+                                                <option value="PE">Pernambuco</option>
+                                                <option value="PI">Piauí</option>
+                                                <option value="RJ">Rio de Janeiro</option>
+                                                <option value="RN">Rio Grande do Norte</option>
+                                                <option value="RS">Rio Grande do Sul</option>
+                                                <option value="RO">Rondônia</option>
+                                                <option value="RR">Roraima</option>
+                                                <option value="SC">Santa Catarina</option>
+                                                <option value="SP">São Paulo</option>
+                                                <option value="SE">Sergipe</option>
+                                                <option value="TO">Tocantins</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="mt-6 flex justify-end">
+                                    <button id="nextToTransport" class="bg-primary hover:bg-secondary text-white px-4 py-2 rounded-lg flex items-center">
+                                        Próximo <i class="fas fa-arrow-right ml-2"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- Transport data form -->
+                            <div id="transportContent" class="tab-content hidden">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div>
+                                        <label for="transportType" class="block text-sm font-medium text-gray-700 mb-1">Tipo de Transporte</label>
+                                        <select id="transportType" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary">
+                                            <option value="">Selecione</option>
+                                            <option value="AMBULANCIA">Ambulância</option>
+                                            <option value="UTI_MOVEL">UTI Móvel</option>
+                                            <option value="VEICULO_ADAPTADO">Veículo Adaptado</option>
+                                            <option value="TAXI">Táxi</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div>
+                                        <label for="transportPriority" class="block text-sm font-medium text-gray-700 mb-1">Prioridade</label>
+                                        <select id="transportPriority" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary">
+                                            <option value="ROTINA">Rotina</option>
+                                            <option value="URGENCIA">Urgência</option>
+                                            <option value="EMERGENCIA">Emergência</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div>
+                                        <label for="transportDate" class="block text-sm font-medium text-gray-700 mb-1">Data do Transporte</label>
+                                        <input type="date" id="transportDate" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary">
+                                    </div>
+                                    
+                                    <div>
+                                        <label for="transportTime" class="block text-sm font-medium text-gray-700 mb-1">Horário</label>
+                                        <input type="time" id="transportTime" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary">
+                                    </div>
+                                </div>
+                                
+                                <div class="mt-6">
+                                    <h3 class="text-lg font-medium text-gray-900 mb-4">Locais de Origem e Destino</h3>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div>
+                                            <label for="originType" class="block text-sm font-medium text-gray-700 mb-1">Tipo de Origem</label>
+                                            <select id="originType" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary">
+                                                <option value="DOMICILIO">Domicílio</option>
+                                                <option value="HOSPITAL">Hospital</option>
+                                                <option value="UBS">UBS</option>
+                                                <option value="OUTRO">Outro</option>
+                                            </select>
+                                        </div>
+                                        
+                                        <div>
+                                            <label for="destinationType" class="block text-sm font-medium text-gray-700 mb-1">Tipo de Destino</label>
+                                            <select id="destinationType" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary">
+                                                <option value="HOSPITAL">Hospital</option>
+                                                <option value="UBS">UBS</option>
+                                                <option value="DOMICILIO">Domicílio</option>
+                                                <option value="OUTRO">Outro</option>
+                                            </select>
+                                        </div>
+                                        
+                                        <div id="originAddressSection">
+                                            <label for="originAddress" class="block text-sm font-medium text-gray-700 mb-1">Endereço de Origem</label>
+                                            <input type="text" id="originAddress" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary">
+                                        </div>
+                                        
+                                        <div id="destinationAddressSection">
+                                            <label for="destinationAddress" class="block text-sm font-medium text-gray-700 mb-1">Endereço de Destino</label>
+                                            <input type="text" id="destinationAddress" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary">
+                                        </div>
+                                        
+                                        <div id="originUnitSection" class="hidden">
+                                            <label for="originUnit" class="block text-sm font-medium text-gray-700 mb-1">Unidade de Saúde de Origem</label>
+                                            <select id="originUnit" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary">
+                                                <option value="">Selecione</option>
+                                                <option value="HOSPITAL_A">Hospital Municipal A</option>
+                                                <option value="HOSPITAL_B">Hospital Estadual B</option>
+                                                <option value="UBS_1">UBS Centro</option>
+                                                <option value="UBS_2">UBS Norte</option>
+                                            </select>
+                                        </div>
+                                        
+                                        <div id="destinationUnitSection" class="hidden">
+                                            <label for="destinationUnit" class="block text-sm font-medium text-gray-700 mb-1">Unidade de Saúde de Destino</label>
+                                            <select id="destinationUnit" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary">
+                                                <option value="">Selecione</option>
+                                                <option value="HOSPITAL_A">Hospital Municipal A</option>
+                                                <option value="HOSPITAL_B">Hospital Estadual B</option>
+                                                <option value="UBS_1">UBS Centro</option>
+                                                <option value="UBS_2">UBS Norte</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="mt-6">
+                                    <h3 class="text-lg font-medium text-gray-900 mb-4">Acompanhante</h3>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div>
+                                            <label for="companionNeeded" class="block text-sm font-medium text-gray-700 mb-1">Necessita de acompanhante?</label>
+                                            <select id="companionNeeded" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary">
+                                                <option value="NAO">Não</option>
+                                                <option value="SIM">Sim</option>
+                                            </select>
+                                        </div>
+                                        
+                                        <div id="companionDetailsSection" class="hidden">
+                                            <label for="companionName" class="block text-sm font-medium text-gray-700 mb-1">Nome do Acompanhante</label>
+                                            <input type="text" id="companionName" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary">
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="mt-6 flex justify-between">
+                                    <button id="backToPatient" class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-lg flex items-center">
+                                        <i class="fas fa-arrow-left mr-2"></i> Voltar
+                                    </button>
+                                    <button id="nextToMedical" class="bg-primary hover:bg-secondary text-white px-4 py-2 rounded-lg flex items-center">
+                                        Próximo <i class="fas fa-arrow-right ml-2"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- Medical data form -->
+                            <div id="medicalContent" class="tab-content hidden">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div>
+                                        <label for="medicalCondition" class="block text-sm font-medium text-gray-700 mb-1">Condição Médica</label>
+                                        <select id="medicalCondition" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary">
+                                            <option value="">Selecione</option>
+                                            <option value="POS_CIRURGIA">Pós-cirurgia</option>
+                                            <option value="QUIMIOTERAPIA">Quimioterapia</option>
+                                            <option value="DIALISE">Diálise</option>
+                                            <option value="CONSULTA">Consulta médica</option>
+                                            <option value="EXAME">Exame</option>
+                                            <option value="OUTRO">Outro</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div>
+                                        <label for="mobilityLevel" class="block text-sm font-medium text-gray-700 mb-1">Nível de Mobilidade</label>
+                                        <select id="mobilityLevel" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary">
+                                            <option value="ANDANDO">Andando</option>
+                                            <option value="CADEIRA_DE_RODAS">Cadeira de rodas</option>
+                                            <option value="MACA">Maca</option>
+                                            <option value="DECUBITO">Decúbito</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="md:col-span-2">
+                                        <label for="medicalObservations" class="block text-sm font-medium text-gray-700 mb-1">Observações Médicas</label>
+                                        <textarea id="medicalObservations" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"></textarea>
+                                    </div>
+                                    
+                                    <div class="md:col-span-2">
+                                        <label for="equipmentNeeded" class="block text-sm font-medium text-gray-700 mb-1">Equipamentos Necessários</label>
+                                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-2">
+                                            <div class="flex items-center">
+                                                <input type="checkbox" id="equipOxygen" class="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded">
+                                                <label for="equipOxygen" class="ml-2 block text-sm text-gray-700">Oxigênio</label>
+                                            </div>
+                                            <div class="flex items-center">
+                                                <input type="checkbox" id="equipMonitor" class="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded">
+                                                <label for="equipMonitor" class="ml-2 block text-sm text-gray-700">Monitor</label>
+                                            </div>
+                                            <div class="flex items-center">
+                                                <input type="checkbox" id="equipBomb" class="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded">
+                                                <label for="equipBomb" class="ml-2 block text-sm text-gray-700">Bomba Infusora</label>
+                                            </div>
+                                            <div class="flex items-center">
+                                                <input type="checkbox" id="equipAspirator" class="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded">
+                                                <label for="equipAspirator" class="ml-2 block text-sm text-gray-700">Aspirador</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="mt-6 flex justify-between">
+                                    <button id="backToTransport" class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-lg flex items-center">
+                                        <i class="fas fa-arrow-left mr-2"></i> Voltar
+                                    </button>
+                                    <button class="bg-primary hover:bg-secondary text-white px-4 py-2 rounded-lg flex items-center">
+                                        <i class="fas fa-save mr-2"></i> Salvar Agendamento
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        // Sidebar toggle functionality
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        const sidebar = document.querySelector('.sidebar');
+        const mainContent = document.querySelector('.main-content');
+        
+        sidebarToggle.addEventListener('click', () => {
+            sidebar.classList.toggle('collapsed');
+            mainContent.classList.toggle('ml-64');
+            mainContent.classList.toggle('ml-20');
+        });
+        
+        // Notification dropdown toggle
+        const notificationBtn = document.getElementById('notificationBtn');
+        const notificationDropdown = document.getElementById('notificationDropdown');
+        
+        notificationBtn.addEventListener('click', () => {
+            notificationDropdown.classList.toggle('hidden');
+        });
+        
+        // Close notification dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!notificationBtn.contains(e.target) && !notificationDropdown.contains(e.target)) {
+                notificationDropdown.classList.add('hidden');
+            }
+        });
+        
+        // User menu dropdown toggle
+        const userMenuBtn = document.getElementById('userMenuBtn');
+        const userMenuDropdown = document.getElementById('userMenuDropdown');
+        
+        userMenuBtn.addEventListener('click', () => {
+            userMenuDropdown.classList.toggle('hidden');
+        });
+        
+        // Close user menu dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!userMenuBtn.contains(e.target) && !userMenuDropdown.contains(e.target)) {
+                userMenuDropdown.classList.add('hidden');
+            }
+        });
+        
+        // Tab functionality
+        const tabs = {
+            patientTab: document.getElementById('patientTab'),
+            transportTab: document.getElementById('transportTab'),
+            medicalTab: document.getElementById('medicalTab'),
+            patientContent: document.getElementById('patientContent'),
+            transportContent: document.getElementById('transportContent'),
+            medicalContent: document.getElementById('medicalContent'),
+        };
+        
+        function switchTab(activeTab, activeContent) {
+            // Reset all tabs
+            Object.values(tabs).forEach(tab => {
+                if (tab.classList) {
+                    tab.classList.remove('active');
+                    tab.classList.add('hidden');
+                }
+            });
+            
+            // Remove active class from all tab buttons
+            [tabs.patientTab, tabs.transportTab, tabs.medicalTab].forEach(tab => {
+                tab.classList.remove('active', 'border-primary', 'text-primary');
+                tab.classList.add('border-transparent', 'text-gray-500');
+            });
+            
+            // Set active tab
+            activeTab.classList.add('active', 'border-primary', 'text-primary');
+            activeTab.classList.remove('border-transparent', 'text-gray-500');
+            activeContent.classList.add('active');
+            activeContent.classList.remove('hidden');
+        }
+        
+        tabs.patientTab.addEventListener('click', () => switchTab(tabs.patientTab, tabs.patientContent));
+        tabs.transportTab.addEventListener('click', () => switchTab(tabs.transportTab, tabs.transportContent));
+        tabs.medicalTab.addEventListener('click', () => switchTab(tabs.medicalTab, tabs.medicalContent));
+        
+        // Next/back buttons for form sections
+        document.getElementById('nextToTransport').addEventListener('click', () => switchTab(tabs.transportTab, tabs.transportContent));
+        document.getElementById('nextToMedical').addEventListener('click', () => switchTab(tabs.medicalTab, tabs.medicalContent));
+        document.getElementById('backToPatient').addEventListener('click', () => switchTab(tabs.patientTab, tabs.patientContent));
+        document.getElementById('backToTransport').addEventListener('click', () => switchTab(tabs.transportTab, tabs.transportContent));
+        
+        // Show/hide companion details based on selection
+        const companionNeeded = document.getElementById('companionNeeded');
+        const companionDetailsSection = document.getElementById('companionDetailsSection');
+        
+        companionNeeded.addEventListener('change', () => {
+            if (companionNeeded.value === 'SIM') {
+                companionDetailsSection.classList.remove('hidden');
+            } else {
+                companionDetailsSection.classList.add('hidden');
+            }
+        });
+        
+        // Show/hide origin/destination fields based on type
+        const originType = document.getElementById('originType');
+        const destinationType = document.getElementById('destinationType');
+        const originAddressSection = document.getElementById('originAddressSection');
+        const originUnitSection = document.getElementById('originUnitSection');
+        const destinationAddressSection = document.getElementById('destinationAddressSection');
+        const destinationUnitSection = document.getElementById('destinationUnitSection');
+        
+        originType.addEventListener('change', () => {
+            if (originType.value === 'DOMICILIO' || originType.value === 'OUTRO') {
+                originAddressSection.classList.remove('hidden');
+                originUnitSection.classList.add('hidden');
+            } else {
+                originAddressSection.classList.add('hidden');
+                originUnitSection.classList.remove('hidden');
+            }
+        });
+        
+        destinationType.addEventListener('change', () => {
+            if (destinationType.value === 'DOMICILIO' || destinationType.value === 'OUTRO') {
+                destinationAddressSection.classList.remove('hidden');
+                destinationUnitSection.classList.add('hidden');
+            } else {
+                destinationAddressSection.classList.add('hidden');
+                destinationUnitSection.classList.remove('hidden');
+            }
+        });
+        
+        // Initialize form sections
+        if (originType.value !== 'DOMICILIO' && originType.value !== 'OUTRO') {
+            originAddressSection.classList.add('hidden');
+            originUnitSection.classList.remove('hidden');
+        }
+        
+        if (destinationType.value !== 'DOMICILIO' && destinationType.value !== 'OUTRO') {
+            destinationAddressSection.classList.add('hidden');
+            destinationUnitSection.classList.remove('hidden');
+        }
+        
+        // Form validation would go here in a real implementation
+    </script>
+</body>
+</html>
