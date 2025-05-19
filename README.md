@@ -67,6 +67,6 @@ Estrutura de pastas recomendada
 transporte-pacientes/
 frontend (index.html)
 backend (salvar_paciente.php)
-Banco de dados (0101_estrutura_banco.sql/02_manipulacao_dados.sql)
+Banco de dados (01_estrutura_banco.sql/02_manipulacao_dados.sql)
 README.md
 .gitignore
