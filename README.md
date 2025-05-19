@@ -65,12 +65,8 @@ http://localhost/transporte-pacientes/index.html
 
 Estrutura de pastas recomendada
 transporte-pacientes/
-├── frontend/
-│ └── index.html
-├── backend/
-│ └── salvar_paciente.php
-├── banco_de_dados/
-│ ├── 01_estrutura_banco.sql
-│ └── 02_manipulacao_dados.sql
-├── README.md
-├── .gitignore
+frontend (index.html)
+backend (salvar_paciente.php)
+Banco de dados (01_estrutura_banco.sql/02_manipulacao_dados.sql)
+README.md
+.gitignore
